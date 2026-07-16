@@ -1,0 +1,69 @@
+# dependencies
+node_modules/
+
+# builds
+dist/
+*.tsbuildinfo
+
+# environment — never commit a real value
+.env
+.env.*
+!.env.example
+
+# logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# test output
+coverage/
+test-results/
+
+# deployment
+.vercel
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# AI Assistants, Agents & LLM Tooling Artifacts — strictly ignored
+.agents/
+*.agents*
+AGENTS.md
+.claude/
+CLAUDE.md
+*.claude
+.gemini/
+GEMINI.md
+*.gemini*
+.cursor/
+.cursorrules
+*.cursor*
+.copilot/
+COPILOT.md
+.github/copilot-*
+.antigravity/
+antigravity*
+*.antigravity*
+.cortex/
+cortex*
+*.cortex*
+.brain/
+brain/
+*.system_generated*
+.system_generated/
+scratch/
+*scratchpad*
+*.scratchpad*
+
+# Planning & Scratch Documents (Agentic touch)
+IMPLEMENTATION_PLAN.md
+VERCEL_DEPLOYMENT_GUIDE.md
+/*.md
+!/README.md
+
+# benchmark dataset (not licensed for redistribution; drop it in locally if you have it)
+src/data/p12-public.json
