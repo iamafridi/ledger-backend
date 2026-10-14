@@ -35,6 +35,16 @@ import { warehouseRouter } from "./modules/warehouse/warehouse.routes.js";
 import { auditRouter } from "./modules/audit/audit.routes.js";
 import { errorHandler, notFound } from "./shared/middleware/error-handler.js";
 
+// Some deployment environments (e.g. Vercel serverless / @vercel/node) resolve
+// dual CJS/ESM packages as namespace objects rather than directly callable functions.
+const helmetMiddleware: any =
+  typeof helmet === "function" ? helmet : (helmet as any)?.default ?? helmet;
+
+const rateLimitMiddleware: any =
+  typeof rateLimit === "function"
+    ? rateLimit
+    : (rateLimit as any)?.default ?? (rateLimit as any)?.rateLimit ?? rateLimit;
+
 export function createApp(): Express {
   const app = express();
   const origins = allowedOrigins();
@@ -44,7 +54,7 @@ export function createApp(): Express {
   // sees every request as coming from the proxy and rate-limits all users as one.
   app.set("trust proxy", 1);
 
-  app.use(helmet());
+  app.use(helmetMiddleware());
   app.use(
     cors({
       origin(origin, callback) {
@@ -63,7 +73,7 @@ export function createApp(): Express {
 
   app.use(express.json({ limit: "1mb" }));
   app.use(
-    rateLimit({
+    rateLimitMiddleware({
       windowMs: 60_000,
       limit: 300,
       standardHeaders: "draft-7",

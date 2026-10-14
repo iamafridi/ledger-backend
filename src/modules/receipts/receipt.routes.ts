@@ -40,12 +40,17 @@ const upload = multer({
   },
 });
 
+const rateLimitMiddleware: any =
+  typeof rateLimit === "function"
+    ? rateLimit
+    : (rateLimit as any)?.default ?? (rateLimit as any)?.rateLimit ?? rateLimit;
+
 /**
  * A vision call costs real money and takes seconds. Without a cap, one loop in a
  * client — or one person holding down a button — runs up a bill and starves
  * every other user of the single Render instance.
  */
-const scanLimiter = rateLimit({
+const scanLimiter = rateLimitMiddleware({
   windowMs: 60_000,
   limit: 12,
   standardHeaders: "draft-7",
