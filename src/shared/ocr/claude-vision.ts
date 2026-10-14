@@ -4,7 +4,7 @@
  * The prompt, JSON schema and validation are shared with the OpenAI adapter via
  * ./prompt.ts so the two providers cannot drift apart.
  */
-import Anthropic from "@anthropic-ai/sdk";
+import { Anthropic } from "@anthropic-ai/sdk";
 import { EMPTY_EXTRACTION, type OcrPort, type ReceiptExtraction } from "./types.js";
 import {
   OCR_JSON_SCHEMA,
