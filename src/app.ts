@@ -33,6 +33,7 @@ import { salaryRouter } from "./modules/salary/salary.routes.js";
 import { settingsRouter } from "./modules/settings/settings.routes.js";
 import { warehouseRouter } from "./modules/warehouse/warehouse.routes.js";
 import { auditRouter } from "./modules/audit/audit.routes.js";
+import { connectDatabase } from "./config/database.js";
 import { errorHandler, notFound } from "./shared/middleware/error-handler.js";
 
 // Some deployment environments (e.g. Vercel serverless / @vercel/node) resolve
@@ -54,13 +55,24 @@ export function createApp(): Express {
   // sees every request as coming from the proxy and rate-limits all users as one.
   app.set("trust proxy", 1);
 
-  app.use(helmetMiddleware());
+  // Allow Firebase / Google authentication popups by configuring Cross-Origin-Opener-Policy
+  app.use(
+    helmetMiddleware({
+      crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+    }),
+  );
+
   app.use(
     cors({
       origin(origin, callback) {
         // A server-to-server call or a curl has no Origin header. CORS exists to
         // protect browsers, so those are not the thing it is guarding against.
-        if (!origin || origins.includes(origin)) {
+        if (
+          !origin ||
+          origins.includes(origin) ||
+          origin.startsWith("http://localhost:") ||
+          origin.endsWith(".vercel.app")
+        ) {
           callback(null, true);
           return;
         }
@@ -80,6 +92,39 @@ export function createApp(): Express {
       legacyHeaders: false,
     }),
   );
+
+  // Auto-connect MongoDB in serverless environments (e.g. Vercel)
+  app.use(async (_req, _res, next) => {
+    try {
+      await connectDatabase();
+      next();
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // Root health probe
+  app.get("/", (_req, res) => {
+    res.json({
+      name: "Ledger API",
+      status: "healthy",
+      version: "1.0.0",
+      docs: "/api/v1/health",
+    });
+  });
+
+  // Normalize route paths so requests without /api/v1 (e.g. /auth/me or /settings)
+  // are seamlessly routed to their /api/v1/ counterparts.
+  app.use((req, _res, next) => {
+    if (!req.url.startsWith("/api/v1") && req.url !== "/") {
+      if (req.url.startsWith("/api/")) {
+        req.url = req.url.replace(/^\/api\//, "/api/v1/");
+      } else {
+        req.url = `/api/v1${req.url.startsWith("/") ? "" : "/"}${req.url}`;
+      }
+    }
+    next();
+  });
 
   app.use("/api/v1/health", healthRouter);
   app.use("/api/v1/auth", authRouter);
@@ -119,3 +164,6 @@ export function createApp(): Express {
 
   return app;
 }
+
+const defaultApp = createApp();
+export default defaultApp;
